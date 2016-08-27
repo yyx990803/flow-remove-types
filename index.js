@@ -1,4 +1,5 @@
 var babylon = require('babylon');
+var MagicString = require('magic-string');
 
 /**
  * Given a string JavaScript source which contains Flow types, return a string
@@ -40,27 +41,20 @@ module.exports = function flowRemoveTypes(source, options) {
     return source;
   }
 
-  var result = '';
-  var lastPos = 0;
+  var s = new MagicString(source);
 
   // Step through the removed nodes, building up the resulting string.
   for (var i = 0; i < removedNodes.length; i++) {
     var node = removedNodes[i];
-    result += source.slice(lastPos, node.start);
-    var toReplace = source.slice(node.start, node.end);
-    lastPos = node.end;
-    if (!node.loc || node.loc.start.line === node.loc.end.line) {
-      result += space(toReplace.length);
-    } else {
-      var toReplaceLines = toReplace.split(LINE_RX);
-      result += space(toReplaceLines[0].length);
-      for (var j = 1; j < toReplaceLines.length; j += 2) {
-        result += toReplaceLines[j] + space(toReplaceLines[j + 1].length);
-      }
-    }
+    s.overwrite(node.start, node.end, '');
   }
 
-  return result += source.slice(lastPos);
+  var result = { code: s.toString() };
+  if (options && options.sourceMap !== false) {
+    result.map = s.generateMap({ hires: true });
+  }
+
+  return result;
 }
 
 var LINE_RX = /(\r\n?|\n|\u2028|\u2029)/;
@@ -202,22 +196,4 @@ function findTokenIndex(tokens, offset) {
   }
 
   return ptr;
-}
-
-// Produce a string full of space characters of a given size.
-function space(size) {
-  var sp = ' '
-  var result = '';
-
-  for (;;) {
-    if ((size & 1) === 1) {
-      result += sp;
-    }
-    size >>>= 1;
-    if (size === 0) {
-      break;
-    }
-    sp += sp;
-  }
-  return result;
 }
