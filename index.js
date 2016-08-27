@@ -17,7 +17,7 @@ module.exports = function flowRemoveTypes(source, options) {
     pragmaStart = source.indexOf('@noflow');
     pragmaEnd = pragmaStart + 7;
     if (pragmaStart === -1 && !(options && options.checkPragma === false)) {
-      return source;
+      return { code: source };
     }
   }
 
