@@ -10,14 +10,18 @@ var MagicString = require('magic-string');
  *   - checkPragma: (default: true) looks for an @flow pragma before parsing.
  */
 module.exports = function flowRemoveTypes(source, options) {
+  options = options || {};
+
+  var s = new MagicString(source);
+
   // If there's no @flow or @noflow flag, then expect no annotation.
   var pragmaStart = source.indexOf('@flow');
   var pragmaEnd = pragmaStart + 5;
   if (pragmaStart === -1) {
     pragmaStart = source.indexOf('@noflow');
     pragmaEnd = pragmaStart + 7;
-    if (pragmaStart === -1 && !(options && options.checkPragma === false)) {
-      return { code: source };
+    if (pragmaStart === -1 && options.checkPragma !== false) {
+      return { code: source, map: s.generateMap({ hires: true }) };
     }
   }
 
@@ -38,10 +42,8 @@ module.exports = function flowRemoveTypes(source, options) {
   visit(ast, removedNodes, removeFlowVisitor);
 
   if (removedNodes.length === 0) {
-    return source;
+    return { code: source, map: s.generateMap({ hires: true }) };
   }
-
-  var s = new MagicString(source);
 
   // Step through the removed nodes, building up the resulting string.
   for (var i = 0; i < removedNodes.length; i++) {
@@ -50,7 +52,7 @@ module.exports = function flowRemoveTypes(source, options) {
   }
 
   var result = { code: s.toString() };
-  if (options && options.sourceMap !== false) {
+  if (options.sourceMap !== false) {
     result.map = s.generateMap({ hires: true });
   }
 
