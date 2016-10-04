@@ -21,7 +21,7 @@ module.exports = function flowRemoveTypes(source, options) {
     pragmaStart = source.indexOf('@noflow');
     pragmaEnd = pragmaStart + 7;
     if (pragmaStart === -1 && options.checkPragma !== false) {
-      return { code: source, map: s.generateMap() };
+      return { code: source, map: s.generateMap({ hires: true }) };
     }
   }
 
@@ -42,7 +42,7 @@ module.exports = function flowRemoveTypes(source, options) {
   visit(ast, removedNodes, removeFlowVisitor);
 
   if (removedNodes.length === 0) {
-    return { code: source, map: s.generateMap() };
+    return { code: source, map: s.generateMap({ hires: true }) };
   }
 
   // Step through the removed nodes, building up the resulting string.
